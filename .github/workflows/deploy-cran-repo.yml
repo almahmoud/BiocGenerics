@@ -28,3 +28,13 @@ jobs:
         with:
           packages: "."
           repo-path: "_site"
+
+      # Upload the CRAN repository for use in the next step
+      # Make sure to set a retention day to avoid running into a cap
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: rwasmrepo
+          path: |
+            _site
+          retention-days: 1
