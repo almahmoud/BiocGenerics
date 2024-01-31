@@ -1,5 +1,9 @@
-⚠️ This repository is for developer testing purposes. For the up-to-date version of BiocGenerics head over to: 
+⚠️ This repository is for developer testing purposes. ⚠️
+For the up-to-date version of BiocGenerics head over to: 
 https://github.com/Bioconductor/BiocGenerics
+
+This repository is testing recipies for building a BiocGenerics WASM binary. 
+
 
 [<img src="https://www.bioconductor.org/images/logo/jpg/bioconductor_logo_rgb.jpg" width="200" align="right"/>](https://bioconductor.org/)
 
