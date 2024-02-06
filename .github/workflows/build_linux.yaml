@@ -37,6 +37,14 @@ jobs:
           mkdir -p $LOGDIR
           mkdir -p $LIBRARYDIR
 
+      - name: Cache package library
+        id: container-cache
+        if: matrix.config.type == 'bbs'
+        uses: actions/cache/restore@v4
+        with:
+          path: /var/lib/docker
+          key: ${{steps.deps.outputs.cycleprefix}}containerimage
+
       - name: Start container
         if: matrix.config.type == 'bbs'
         id: cont
@@ -44,6 +52,13 @@ jobs:
         run: |
           CONT_ID=$(docker run -d --user ${{matrix.config.user}} -v ${{github.workspace}}:${{github.workspace}} -v /tmp:/tmp ${{ matrix.config.container }} "sleep 21600")
           echo id=$CONT_ID >> $GITHUB_OUTPUT
+
+      - name: Cache package library
+        if: matrix.config.type == 'bbs'
+        uses: actions/cache/save@v4
+        with:
+          path: /var/lib/docker
+          key: ${{steps.deps.outputs.cycleprefix}}containerimage
 
       - name: Get deps
         if: matrix.config.type == 'bbs'
