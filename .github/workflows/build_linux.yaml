@@ -42,7 +42,6 @@ jobs:
         id: cont
         shell: bash
         run: |
-          mkdir -p /tmp/library
           CONT_ID=$(docker run -d --user ${{matrix.config.user}} -v ${{github.workspace}}:${{github.workspace}} -v /tmp:/tmp ${{ matrix.config.container }} "sleep 21600")
           echo id=$CONT_ID >> $GITHUB_OUTPUT
 
@@ -113,6 +112,7 @@ jobs:
 
           EOF
 
+          docker exec --user root $CONT_ID bash -c "chown -R biocbuild ${{steps.common.outputs.logdir}} ${{steps.common.outputs.outdir}} ${{steps.common.outputs.librarydir}}"
           docker exec --user biocbuild $CONT_ID bash /tmp/scripts/run-bbs.sh
 
 
