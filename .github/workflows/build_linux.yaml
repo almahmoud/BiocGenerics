@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {type: 'bbs', os: 'ubuntu-latest', container: 'ghcr.io/bioconductor/bioconductor_salt:22.04-bioc-3.18'}
+          - {type: 'bbs', os: 'ubuntu-latest', container: 'ghcr.io/almahmoud/bioconductor_salt:devel-jammy-bioc-3.19-r-4.4.0'}
 
     steps:
 
