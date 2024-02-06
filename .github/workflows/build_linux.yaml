@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {type: 'bbs', os: 'ubuntu-latest', container: 'ghcr.io/bioconductor/bioconductor_salt:22.04-bioc-3.18', user: 'root'}
+          - {type: 'bbs', os: 'ubuntu-latest', container: 'ghcr.io/bioconductor/bioconductor_salt:22.04-bioc-3.18'}
 
     steps:
 
@@ -50,7 +50,7 @@ jobs:
         id: cont
         shell: bash
         run: |
-          CONT_ID=$(docker run -d --user ${{matrix.config.user}} -v ${{github.workspace}}:${{github.workspace}} -v /tmp:/tmp ${{ matrix.config.container }} "sleep 21600")
+          CONT_ID=$(docker run -d --user root -v ${{github.workspace}}:${{github.workspace}} -v /tmp:/tmp ${{ matrix.config.container }} "sleep 21600")
           echo id=$CONT_ID >> $GITHUB_OUTPUT
 
       - name: Cache package library
@@ -88,7 +88,7 @@ jobs:
 
           EOF
 
-          echo DEPLIST=$(docker exec --user biocbuild $CONT_ID bash /tmp/scripts/deps.sh)
+          echo DEPLIST=$(docker exec $CONT_ID bash /tmp/scripts/deps.sh)
           if [ "$DEPLIST" == "'${{steps.deps.outputs.cycleprefix}}'" ]; then DEPLIST=''; fi
           echo deplist=$DEPLIST >> $GITHUB_OUTPUT
 
@@ -128,8 +128,7 @@ jobs:
 
           EOF
 
-          docker exec --user root $CONT_ID bash -c "chown -R biocbuild ${{github.workspace}} ${{steps.common.outputs.logdir}} ${{steps.common.outputs.outdir}} ${{steps.common.outputs.librarydir}}"
-          docker exec --user biocbuild $CONT_ID bash /tmp/scripts/run-bbs.sh
+          docker exec $CONT_ID bash /tmp/scripts/run-bbs.sh
 
 
       - name: Cache package library
