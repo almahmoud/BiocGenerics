@@ -93,6 +93,7 @@ jobs:
           cat << "EOF" > /tmp/scripts/run-bbs.sh
           set -x
           cd ${{github.workspace}}/..
+          export R_LIBS_USER=${{steps.common.outputs.librarydir}}
           BBS_R_PATH=$(echo /home/biocbuild/bbs-*-bioc/R)
           $BBS_R_PATH/bin/R CMD INSTALL -l ${{steps.common.outputs.librarydir}} ${{steps.common.outputs.pkg}} &> ${{steps.common.outputs.logdir}}/${{steps.common.outputs.pkg}}-install.log
           cat ${{steps.common.outputs.logdir}}/${{steps.common.outputs.pkg}}-install.log
@@ -112,7 +113,7 @@ jobs:
 
           EOF
 
-          docker exec --user root $CONT_ID bash -c "chown -R biocbuild ${{steps.common.outputs.logdir}} ${{steps.common.outputs.outdir}} ${{steps.common.outputs.librarydir}}"
+          docker exec --user root $CONT_ID bash -c "chown -R biocbuild ${{github.workspace}} ${{steps.common.outputs.logdir}} ${{steps.common.outputs.outdir}} ${{steps.common.outputs.librarydir}}"
           docker exec --user biocbuild $CONT_ID bash /tmp/scripts/run-bbs.sh
 
 
