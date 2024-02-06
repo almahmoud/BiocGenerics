@@ -74,10 +74,12 @@ jobs:
 
           EOF
 
-          echo deplist=$(docker exec --user biocbuild $CONT_ID bash /tmp/scripts/deps.sh) >> $GITHUB_OUTPUT
+          echo DEPLIST=$(docker exec --user biocbuild $CONT_ID bash /tmp/scripts/deps.sh)
+          if [ "$DEPLIST" == "'${{steps.deps.outputs.cycleprefix}}'" ]; then DEPLIST=''; fi
+          echo deplist=$DEPLIST >> $GITHUB_OUTPUT
 
       - uses: almahmoud/multi-cache-restore-action@main
-        if: matrix.config.type == 'bbs' && steps.deps.outputs.deplist != "'steps.deps.outputs.cycleprefix'"
+        if: matrix.config.type == 'bbs' && steps.deps.outputs.deplist != ''
         name: Multi-cache
         with:
           keys: ${{steps.deps.outputs.deplist}}
