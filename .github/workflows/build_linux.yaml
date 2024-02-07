@@ -86,8 +86,10 @@ jobs:
           paths: "'${{steps.common.outputs.librarydir}}'"
 
       - name: Get list for artifacts (that failed cache)
+        if: steps.deps.outputs.deplist != ''
         id: artdeps
         run: |
+          set -x
           DEPLIST=$(echo "${{steps.deps.outputs.deplist}}" | tr -d "'" | tr ',' '\n')
           DEPREMOVE=$(echo "${{steps.cache.outputs.restored-list}}" | tr ',' '\n')
           DIFFLIST=$(comm -23 <(echo "$DEPLIST" | sort) <(echo "$DEPREMOVE" | sort) | tr '\n' ',')
@@ -95,7 +97,7 @@ jobs:
           echo difflist=$DIFFLIST >> $GITHUB_OUTPUT
 
       - uses: actions/download-artifact@v4
-        if: matrix.config.type == 'bbs' && steps.artdeps.outputs.difflist != ''
+        if: steps.deps.outputs.deplist != '' && matrix.config.type == 'bbs' && steps.artdeps.outputs.difflist != ''
         with:
           pattern: "{${{steps.artdeps.outputs.difflist}}}"
           path: "/tmp"
@@ -105,8 +107,11 @@ jobs:
         id: bbs
         shell: bash
         run: |
+          set -x
           # Unpack artifacts
-          ls /tmp | grep 'tar.gz$' | xargs -i tar -xvf {} /
+          touch /tmp/tars
+          ls /tmp | grep 'tar.gz$' > /tmp/tars || true
+          if [ -s /tmp/tars ]; then cat /tmp/tars | xargs -i -r tar -xvf {} /; fi
 
           CONT_ID="${{steps.cont.outputs.id}}"
           cat << "EOF" > /tmp/scripts/run-bbs.sh
