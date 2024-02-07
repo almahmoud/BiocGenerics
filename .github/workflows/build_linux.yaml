@@ -77,18 +77,37 @@ jobs:
           if [ "$DEPLIST" == "'${{steps.common.outputs.cycleprefix}}'" ]; then DEPLIST=''; fi
           echo deplist=$DEPLIST >> $GITHUB_OUTPUT
 
-      - uses: almahmoud/multi-cache-restore-action@main
+      - uses: almahmoud/multi-cache-restore-action@outputs
         if: matrix.config.type == 'bbs' && steps.deps.outputs.deplist != ''
+        id: cache
         name: Multi-cache
         with:
-          keys: ${{steps.deps.outputs.deplist}}
-          paths: ${{steps.common.outputs.librarydir}}
+          keys: "${{steps.deps.outputs.deplist}}"
+          paths: "'${{steps.common.outputs.librarydir}}'"
+
+      - name: Get list for artifacts (that failed cache)
+        id: artdeps
+        run: |
+          DEPLIST=$(echo "${{steps.deps.outputs.deplist}}" | tr -d "'" | tr ',' '\n')
+          DEPREMOVE=$(echo "${{steps.cache.outputs.restored-list}}" | tr ',' '\n')
+          DIFFLIST=$(comm -23 <(echo "$DEPLIST" | sort) <(echo "$DEPREMOVE" | sort) | tr '\n' ',')
+
+          echo difflist=$DIFFLIST >> $GITHUB_OUTPUT
+
+      - uses: actions/download-artifact@v4
+        if: matrix.config.type == 'bbs' && steps.artdeps.outputs.difflist != ''
+        with:
+          pattern: "{${{steps.artdeps.outputs.difflist}}}"
+          path: "/tmp"
 
       - name: Run BBS scripts
         if: matrix.config.type == 'bbs'
         id: bbs
         shell: bash
         run: |
+          # Unpack artifacts
+          ls /tmp | grep 'tar.gz$' | xargs -i tar -xvf {} /
+
           CONT_ID="${{steps.cont.outputs.id}}"
           cat << "EOF" > /tmp/scripts/run-bbs.sh
           set -x
@@ -115,6 +134,8 @@ jobs:
 
           docker exec $CONT_ID bash /tmp/scripts/run-bbs.sh
 
+          # tar up librarydir
+          tar -zcvf "/tmp/${{steps.common.outputs.pkg}}.tar.gz" "${{steps.common.outputs.librarydir}}"
 
       - name: Cache package library
         if: matrix.config.type == 'bbs'
@@ -122,6 +143,13 @@ jobs:
         with:
           path: ${{steps.common.outputs.librarydir}}
           key: ${{steps.common.outputs.cycleprefix}}${{steps.common.outputs.pkg}}
+
+      - name: Upload library as artifact
+        if: matrix.config.type == 'bbs'
+        uses: actions/upload-artifact@v4
+        with:
+          name: "${{steps.common.outputs.cycleprefix}}${{steps.common.outputs.pkg}}"
+          path: "/tmp/${{steps.common.outputs.pkg}}.tar.gz"
 
       - name: Cleanup
         if: matrix.config.type == 'bbs'
